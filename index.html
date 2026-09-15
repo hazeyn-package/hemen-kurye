@@ -10,7 +10,7 @@
         body { font-family: sans-serif; background-color: #f0f2f5; padding: 15px; max-width: 600px; margin: auto; }
         .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
         
-        /* 🚀 PRİV KURYE MARKA KİMLİĞİ VE LOGO ALANI */
+        /* PRİV KURYE LOGO ALANI */
         .brand-header {
             text-align: center;
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
@@ -72,7 +72,7 @@
             text-transform: uppercase;
         }
 
-        /* YENİ: YAŞLI DOSTU UYARI PENCERESİ (MODAL) */
+        /* UYARI PENCERESİ (MODAL) */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.6);
@@ -91,9 +91,9 @@
             border-radius: 8px; width: 100%;
         }
 
-        /* Form ve Harita Stilleri */
+        /* FORM VE HARİTA STİLLERİ */
         label { font-weight: bold; display: block; margin-top: 15px; font-size: 1.1rem; color: #444; }
-        .sub-label { font-size: 1rem; color: #007bff; margin-top: 8px; font-weight: 600; display: block; }
+        .sub-label { font-size: 1.05rem; color: #007bff; margin-top: 8px; font-weight: bold; display: block; }
         input, select, textarea, button { width: 100%; padding: 14px; margin-top: 8px; border-radius: 8px; border: 1px solid #ccc; font-size: 1.1rem; box-sizing: border-box; }
         textarea { resize: vertical; font-family: inherit; }
         .map { height: 250px; margin-top: 10px; border-radius: 8px; border: 2px solid #ccc; z-index: 1; }
@@ -107,27 +107,39 @@
 
         .btn-location { background-color: #e9ecef; color: #333; border: 1px solid #ccc; font-weight: bold; margin-bottom: 10px; cursor: pointer; }
         .btn-location:hover { background-color: #dee2e6; }
-        .btn-submit { background-color: #ff3366; color: white; border: none; font-weight: bold; font-size: 1.3rem; margin-top: 20px; cursor: pointer; padding: 16px; box-shadow: 0 4px 15px rgba(255, 51, 102, 0.4); transition: transform 0.2s; }
-        .btn-submit:hover { background-color: #e62e5c; transform: scale(1.02); }
         
-        .selected-address-box { background-color: #e3f2fd; color: #0d47a1; padding: 12px; border-radius: 8px; margin-top: 10px; font-weight: bold; font-size: 1rem; border: 1px solid #bbdefb; display: none; line-height: 1.4; }
-        .status { text-align: center; font-weight: 500; margin-top: 8px; font-size: 0.95rem; color: #666; }
+        /* WHATSAPP BUTONU (Net Yönlendirme) */
+        .btn-submit { 
+            background-color: #25D366; 
+            color: white; 
+            border: none; 
+            font-weight: bold; 
+            font-size: 1.2rem; 
+            margin-top: 20px; 
+            cursor: pointer; 
+            padding: 18px; 
+            box-shadow: 0 4px 15px rgba(37, 211, 102, 0.4); 
+            transition: transform 0.2s; 
+        }
+        .btn-submit:hover { background-color: #20bd5a; transform: scale(1.02); }
+        
+        .selected-address-box { background-color: #e3f2fd; color: #0d47a1; padding: 12px; border-radius: 8px; margin-top: 10px; font-weight: bold; font-size: 1rem; border: 1px solid #bbdefb; display: none; line-height: 1.4; word-wrap: break-word; }
+        .status { text-align: center; font-weight: bold; margin-top: 8px; font-size: 1.1rem; color: #dc3545; }
     </style>
 </head>
 <body>
-    <!-- YENİ UYARI MODALI (Korkutucu Hatalar Yerine) -->
+    <!-- BİLGİ PENCERESİ (Hata durumunda açılır) -->
     <div id="customModal" class="modal-overlay">
         <div class="modal-content">
-            <h3>⚠️ Bilgi</h3>
-            <p id="modalMessage">Mesaj buraya gelecek</p>
+            <h3>⚠️ Eksik Bilgi</h3>
+            <p id="modalMessage"></p>
             <button class="btn-modal" onclick="closeModal()">Tamam, anladım</button>
         </div>
     </div>
 
-    <!-- PRİV KURYE LOGO VE BAŞLIK -->
+    <!-- PRİV KURYE LOGO -->
     <div class="brand-header">
-        <!-- Güncellenmiş, Dışarı Taşmayan İtalik P Logosu -->
-        <svg id="privLogoSvg" class="logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <svg class="logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
             <defs>
                 <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                     <stop offset="0%" style="stop-color:#ff9933;stop-opacity:1" />
@@ -146,9 +158,6 @@
         </svg>
         <h1 class="brand-title">Priv Kurye</h1>
         <p class="brand-subtitle">Hemen Paket Gönder</p>
-        
-        <!-- SADECE SENİN GÖRECEĞİN LOGO İNDİRME BUTONU -->
-        <button onclick="downloadLogoAsPNG()" style="position:absolute; top:10px; right:10px; width:auto; padding:5px 10px; font-size:0.8rem; background:rgba(255,255,255,0.2); color:white; border:none; border-radius:5px; cursor:pointer;">PNG İndir</button>
     </div>
 
     <div class="card">
@@ -156,8 +165,7 @@
         <label>1️⃣ Nereden Alınacak?</label>
         <button class="btn-location" onclick="geolocate('alinacak')">📍 Konumumu Otomatik Bul</button>
         
-        <!-- YENİ: Anlaşılır Label -->
-        <span class="sub-label">🔍 Adres Ara veya Harita Linki Yapıştır:</span>
+        <span class="sub-label">🔍 Adres Ara veya Konum Linki Yapıştır:</span>
         <div class="autocomplete-container">
             <input type="text" id="search_alinacak" oninput="searchAddress('alinacak')" placeholder="Sokak adı veya Maps linki girin...">
             <ul id="results_alinacak" class="autocomplete-list"></ul>
@@ -166,14 +174,13 @@
         
         <div id="selected_box_alinacak" class="selected-address-box">📍 Seçilen Adres: Bekleniyor...</div>
         <div id="map_alinacak" class="map"></div>
-        <div id="status_alinacak" class="status">👆 Lütfen adresi arayın, haritadan seçin veya konum linkini yapıştırın.</div>
+        <div id="status_alinacak" class="status">❌ Konum seçilmedi</div>
 
         <!-- TESLİM BÖLÜMÜ -->
         <label style="margin-top: 30px;">2️⃣ Nereye Teslim Edilecek?</label>
         <button class="btn-location" onclick="geolocate('teslim')">📍 Konumumu Otomatik Bul</button>
         
-        <!-- YENİ: Anlaşılır Label -->
-        <span class="sub-label">🔍 Adres Ara veya Harita Linki Yapıştır:</span>
+        <span class="sub-label">🔍 Adres Ara veya Konum Linki Yapıştır:</span>
         <div class="autocomplete-container">
             <input type="text" id="search_teslim" oninput="searchAddress('teslim')" placeholder="Sokak adı veya Maps linki girin...">
             <ul id="results_teslim" class="autocomplete-list"></ul>
@@ -182,7 +189,7 @@
         
         <div id="selected_box_teslim" class="selected-address-box">📍 Seçilen Adres: Bekleniyor...</div>
         <div id="map_teslim" class="map"></div>
-        <div id="status_teslim" class="status">👆 Lütfen adresi arayın, haritadan seçin veya konum linkini yapıştırın.</div>
+        <div id="status_teslim" class="status">❌ Konum seçilmedi</div>
     </div>
 
     <!-- SEÇENEKLER KARTI -->
@@ -244,7 +251,8 @@
         <label>Ek Notlar (İsteğe bağlı)</label>
         <textarea id="genel_aciklama" rows="2" placeholder="Kuryeye iletmek istediğiniz diğer detaylar..."></textarea>
 
-        <button class="btn-submit" onclick="sendToWhatsApp()">🚀 Priv Kurye'yi Çağır</button>
+        <!-- WHATSAPP YÖNLENDİRMESİ AÇIKÇA BELİRTİLDİ -->
+        <button class="btn-submit" onclick="sendToWhatsApp()">✅ WhatsApp'tan Priv Kurye Çağır</button>
     </div>
 
     <!-- HARİTA VE JS KODLARI -->
@@ -256,11 +264,9 @@
         let maps = {};
         let markers = { alinacak: null, teslim: null };
         let coords = { alinacak: null, teslim: null };
-        // YENİ: Yapıştırılan hazır linkleri tutmak için
         let pastedLinks = { alinacak: null, teslim: null }; 
         let searchTimeouts = {};
 
-        // YENİ: Özel Modal (Hata/Uyarı) Fonksiyonları
         function showModal(message) {
             document.getElementById('modalMessage').innerHTML = message;
             document.getElementById('customModal').style.display = 'flex';
@@ -289,12 +295,15 @@
         function updateSelectedBox(type, addressText) {
             const box = document.getElementById('selected_box_' + type);
             box.style.display = 'block';
-            box.innerHTML = `📍 Haritadaki Adres:<br><span style="color:#333; font-weight:normal; margin-top:5px; display:inline-block;">${addressText}</span>`;
-            document.getElementById('status_' + type).style.display = 'none'; 
+            box.innerHTML = `📍 Seçilen Adres:<br><span style="color:#333; font-weight:normal; margin-top:5px; display:inline-block;">${addressText}</span>`;
+            
+            const statusEl = document.getElementById('status_' + type);
+            statusEl.innerHTML = "✅ Konum seçildi";
+            statusEl.style.color = "#28a745";
         }
 
         function setMarker(type, lat, lng, isClick = false) {
-            // Eğer müşteri haritaya tıklarsa, önceden yapıştırdığı link varsa onu iptal et
+            // Haritaya tıklanırsa veya arama yapılırsa yapıştırılan linki iptal et
             pastedLinks[type] = null; 
 
             if (markers[type]) maps[type].removeLayer(markers[type]);
@@ -309,7 +318,8 @@
 
         function geolocate(type) {
             if (navigator.geolocation) {
-                document.getElementById('status_' + type).innerHTML = "⏳ Konumunuz bulunuyor, lütfen bekleyin...";
+                document.getElementById('status_' + type).innerHTML = "⏳ Konumunuz bulunuyor...";
+                document.getElementById('status_' + type).style.color = "#666";
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
                         const lat = position.coords.latitude;
@@ -318,8 +328,9 @@
                         reverseGeocode(type, lat, lng);
                     },
                     (error) => {
-                        showModal("Konumunuz alınamadı. Lütfen telefonunuzun konum/GPS servislerinin açık olduğundan emin olun veya adresi elle girin.");
-                        document.getElementById('status_' + type).innerHTML = "👆 Lütfen adresi arayın, haritadan seçin veya konum linkini yapıştırın.";
+                        showModal("Konumunuz alınamadı. Telefonunuzun konum servislerinin açık olduğundan emin olun.");
+                        document.getElementById('status_' + type).innerHTML = "❌ Konum alınamadı";
+                        document.getElementById('status_' + type).style.color = "#dc3545";
                     },
                     { enableHighAccuracy: true }
                 );
@@ -333,19 +344,28 @@
             const query = document.getElementById('search_' + type).value.trim();
             const resultsContainer = document.getElementById('results_' + type);
             
-            // YENİ: Müşteri hazır bir Maps Linki Yapıştırdıysa!
-            if (query.startsWith('http') || query.includes('maps.app.goo.gl') || query.includes('google.com/maps')) {
-                pastedLinks[type] = query; // Linki hafızaya al
-                coords[type] = null; // Eski harita işaretini önemsiz yap
+            // LİNK YAPIŞTIRILDIYSA ÇALIŞACAK AKILLI BÖLÜM
+            if (query.includes('http') || query.includes('goo.gl') || query.includes('maps')) {
+                pastedLinks[type] = query; 
                 
-                updateSelectedBox(type, "🔗 Hazır Konum Linki Eklendi");
-                document.getElementById('map_' + type).style.borderColor = "#28a745";
-                resultsContainer.innerHTML = ''; // Önerileri kapa
-                return; // Adres arama motorunu çalıştırma
-            } else {
-                pastedLinks[type] = null; // Link değilse sıfırla
+                // Linkin içinde koordinat varsa (örn: 41.02,29.09) haritayı oraya uçur
+                const match = query.match(/(-?\d+\.\d+)[, ]+(-?\d+\.\d+)/);
+                if (match) {
+                    const lat = parseFloat(match[1]);
+                    const lng = parseFloat(match[2]);
+                    setMarker(type, lat, lng, false);
+                    reverseGeocode(type, lat, lng);
+                } else {
+                    // Gizli kısa linkse harita hareket edemez ama işlem onaylanır
+                    coords[type] = null; 
+                    updateSelectedBox(type, `🔗 Hazır Konum Linki Eklendi<br><a href="${query}" target="_blank" style="font-size:0.95rem; color:#007bff; word-break: break-all;">${query}</a>`);
+                    document.getElementById('map_' + type).style.borderColor = "#28a745";
+                }
+                resultsContainer.innerHTML = ''; 
+                return;
             }
 
+            // Normal Adres Araması
             if(query.length < 3) {
                 resultsContainer.innerHTML = '';
                 return;
@@ -377,7 +397,7 @@
                             resultsContainer.appendChild(li);
                         });
                     })
-                    .catch(err => console.log("Arama servisi bekliyor..."));
+                    .catch(err => console.log("Arama bekliyor..."));
             }, 800);
         }
 
@@ -414,30 +434,35 @@
         }
 
         function sendToWhatsApp() {
-            // YENİ: Koordinat VEYA yapıştırılmış link var mı kontrolü
             const alinacakTamam = coords.alinacak || pastedLinks.alinacak;
             const teslimTamam = coords.teslim || pastedLinks.teslim;
 
             if (!alinacakTamam || !teslimTamam) {
-                // Çirkin alert() yerine yeni kibar uyarı modali
-                showModal("Eksik bilgi: Lütfen <b>hem Alınacak hem de Teslim Edilecek</b> yeri haritadan seçin veya konum linkini kutuya yapıştırın.");
+                showModal("Lütfen hem <b>Alınacak</b> hem de <b>Teslim Edilecek</b> yeri haritadan seçin veya kutulara konum linki yapıştırın.");
                 return;
             }
 
             const telefon = "905418733299";
             
-            const alinacakIsim = document.getElementById("search_alinacak").value || "Konum Belirtildi";
+            // WHATSAPP MESAJINI ÇİFT LİNK OLMADAN, TERTEMİZ OLUŞTURMA:
             const alinacakEk = document.getElementById("desc_alinacak").value.trim();
-            const teslimIsim = document.getElementById("search_teslim").value || "Konum Belirtildi";
             const teslimEk = document.getElementById("desc_teslim").value.trim();
-            const genelNot = document.getElementById("genel_aciklama").value.trim();
             
-            // Eğer link yapıştırdıysa o linki kullan, yoksa harita koordinatından link üret
-            const mapAlinacak = pastedLinks.alinacak ? pastedLinks.alinacak : `https://www.google.com/maps?q=${coords.alinacak.lat},${coords.alinacak.lng}`;
-            const mapTeslim = pastedLinks.teslim ? pastedLinks.teslim : `https://www.google.com/maps?q=${coords.teslim.lat},${coords.teslim.lng}`;
+            let alinacakBolum = "";
+            if (pastedLinks.alinacak) {
+                alinacakBolum = `📍 *Konum Linki:* ${pastedLinks.alinacak}`;
+            } else {
+                alinacakBolum = `📍 *Adres:* ${document.getElementById("search_alinacak").value}\n📍 *Harita:* https://www.google.com/maps?q=${coords.alinacak.lat},${coords.alinacak.lng}`;
+            }
+            if (alinacakEk) alinacakBolum += `\n📝 *Not:* ${alinacakEk}`;
 
-            const alinacakMetin = alinacakEk ? `${alinacakIsim}\n📝 *Not:* ${alinacakEk}` : alinacakIsim;
-            const teslimMetin = teslimEk ? `${teslimIsim}\n📝 *Not:* ${teslimEk}` : teslimIsim;
+            let teslimBolum = "";
+            if (pastedLinks.teslim) {
+                teslimBolum = `📍 *Konum Linki:* ${pastedLinks.teslim}`;
+            } else {
+                teslimBolum = `📍 *Adres:* ${document.getElementById("search_teslim").value}\n📍 *Harita:* https://www.google.com/maps?q=${coords.teslim.lat},${coords.teslim.lng}`;
+            }
+            if (teslimEk) teslimBolum += `\n📝 *Not:* ${teslimEk}`;
 
             let alinmaSaati = document.getElementById("alinma_saati").value;
             if (alinmaSaati === "Özel") {
@@ -451,11 +476,12 @@
                 teslimSaati = ozelDeger ? `Özel Saat (${ozelDeger})` : "Özel Saat (Seçilmedi)";
             }
 
+            const genelNot = document.getElementById("genel_aciklama").value.trim();
             const notBolumu = genelNot ? `\n\n📌 *EK NOTLAR:*\n${genelNot}` : "";
 
             const mesaj = `📦 *PRİV KURYE TALEBİ*\n\n` +
-                          `🟢 *ALINACAK YER:*\n${alinacakMetin}\n📍 Konum: ${mapAlinacak}\n\n` +
-                          `🔴 *TESLİM EDİLECEK YER:*\n${teslimMetin}\n📍 Konum: ${mapTeslim}\n\n` +
+                          `🟢 *ALINACAK YER:*\n${alinacakBolum}\n\n` +
+                          `🔴 *TESLİM EDİLECEK YER:*\n${teslimBolum}\n\n` +
                           `📏 *Boyut:* ${document.getElementById("boyut").value}\n` +
                           `⚖️ *Ağırlık:* ${document.getElementById("agirlik").value}\n` +
                           `🕒 *Alınma Zamanı:* ${alinmaSaati}\n` +
@@ -463,32 +489,6 @@
                           notBolumu;
 
             window.open(`https://wa.me/${telefon}?text=${encodeURIComponent(mesaj)}`, '_blank');
-        }
-
-        // YENİ: LOGOYU PNG OLARAK İNDİRME FONKSİYONU
-        function downloadLogoAsPNG() {
-            const svgElement = document.getElementById('privLogoSvg');
-            const serializer = new XMLSerializer();
-            let svgString = serializer.serializeToString(svgElement);
-            svgString = svgString.replace(/<svg/, '<svg width="500" height="500"'); // İndirirken yüksek kalite
-            const canvas = document.createElement("canvas");
-            canvas.width = 500;
-            canvas.height = 500;
-            const ctx = canvas.getContext("2d");
-            const DOMURL = self.URL || self.webkitURL || self;
-            const img = new Image();
-            const svg = new Blob([svgString], {type: "image/svg+xml;charset=utf-8"});
-            const url = DOMURL.createObjectURL(svg);
-            img.onload = function() {
-                ctx.drawImage(img, 0, 0);
-                const png = canvas.toDataURL("image/png");
-                const downloadLink = document.createElement("a");
-                downloadLink.download = "priv-kurye-logo.png";
-                downloadLink.href = png;
-                downloadLink.click();
-                DOMURL.revokeObjectURL(url);
-            };
-            img.src = url;
         }
     </script>
 </body>

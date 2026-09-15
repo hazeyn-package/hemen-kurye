@@ -3,19 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kurye Çağır</title>
+    <title>Priv Kurye - Hızlı Paket Gönder</title>
     <!-- Ücretsiz Harita Kütüphanesi -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         body { font-family: sans-serif; background-color: #f0f2f5; padding: 15px; max-width: 600px; margin: auto; }
         .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        h2 { text-align: center; color: #333; margin-top: 0; }
+        
+        /* 🚀 YENİ: PRİV KURYE MARKA KİMLİĞİ VE LOGO ALANI */
+        .brand-header {
+            text-align: center;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            padding: 30px 15px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        /* Arka plandaki dönen ışık efekti */
+        .brand-header::before {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(255, 51, 102, 0.15) 0%, transparent 60%);
+            animation: rotateBg 15s linear infinite;
+        }
+        @keyframes rotateBg { 100% { transform: rotate(360deg); } }
+
+        /* SVG Logo Animasyonu */
+        .logo-svg {
+            width: 70px;
+            height: 70px;
+            margin-bottom: 15px;
+            animation: floatLogo 3s ease-in-out infinite;
+            filter: drop-shadow(0px 5px 10px rgba(255, 51, 102, 0.4));
+        }
+        @keyframes floatLogo {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+            100% { transform: translateY(0px); }
+        }
+
+        /* Alacalı (Gradient) Başlık Metni */
+        .brand-title {
+            margin: 0;
+            font-size: 2.4rem;
+            font-weight: 900;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            /* Alacalı Renk Geçişi */
+            background: linear-gradient(45deg, #ff3366, #ff9933, #00c6ff);
+            background-size: 200% auto;
+            color: #000;
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shineText 3s linear infinite;
+        }
+        @keyframes shineText { to { background-position: 200% center; } }
+
+        .brand-subtitle {
+            color: #e0e0e0;
+            margin: 8px 0 0 0;
+            font-size: 1.1rem;
+            font-weight: 300;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        /* Form ve Harita Stilleri (Orijinal) */
         label { font-weight: bold; display: block; margin-top: 15px; font-size: 1.1rem; color: #444; }
         input, select, textarea, button { width: 100%; padding: 14px; margin-top: 8px; border-radius: 8px; border: 1px solid #ccc; font-size: 1.1rem; box-sizing: border-box; }
         textarea { resize: vertical; font-family: inherit; }
         .map { height: 250px; margin-top: 10px; border-radius: 8px; border: 2px solid #ccc; z-index: 1; }
         
-        /* Arama Önerileri İçin Dropdown Tasarımı */
         .autocomplete-container { position: relative; }
         .autocomplete-list { position: absolute; z-index: 1000; background: white; width: 100%; border: 1px solid #ccc; border-radius: 0 0 8px 8px; max-height: 250px; overflow-y: auto; margin: 0; padding: 0; list-style: none; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
         .autocomplete-list li { padding: 12px; border-bottom: 1px solid #eee; cursor: pointer; font-size: 1rem; }
@@ -25,19 +91,38 @@
 
         .btn-location { background-color: #e9ecef; color: #333; border: 1px solid #ccc; font-weight: bold; margin-bottom: 10px; cursor: pointer; }
         .btn-location:hover { background-color: #dee2e6; }
-        .btn-submit { background-color: #25D366; color: white; border: none; font-weight: bold; font-size: 1.3rem; margin-top: 20px; cursor: pointer; padding: 16px; }
-        .btn-submit:hover { background-color: #1ebe5d; }
+        .btn-submit { background-color: #ff3366; color: white; border: none; font-weight: bold; font-size: 1.3rem; margin-top: 20px; cursor: pointer; padding: 16px; box-shadow: 0 4px 15px rgba(255, 51, 102, 0.4); transition: transform 0.2s; }
+        .btn-submit:hover { background-color: #e62e5c; transform: scale(1.02); }
         
-        /* Seçilen Adres Kutusu */
         .selected-address-box { background-color: #e3f2fd; color: #0d47a1; padding: 12px; border-radius: 8px; margin-top: 10px; font-weight: bold; font-size: 1rem; border: 1px solid #bbdefb; display: none; line-height: 1.4; }
-        
         .status { text-align: center; font-weight: bold; margin-top: 8px; font-size: 1rem; color: #dc3545; }
     </style>
 </head>
 <body>
+    <!-- 🚀 YENİ: PRİV KURYE LOGO VE BAŞLIK -->
+    <div class="brand-header">
+        <!-- Saf Kod ile Çizilmiş Özel Hızlı Paket Logosu -->
+        <svg class="logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#ff9933;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#ff3366;stop-opacity:1" />
+                </linearGradient>
+            </defs>
+            <!-- Arka Plan Yuvarlağı -->
+            <circle cx="50" cy="50" r="45" fill="url(#logoGrad)" />
+            <!-- P Harfi -->
+            <text x="50" y="68" font-size="55" font-family="Arial, sans-serif" font-weight="900" fill="white" text-anchor="middle">P</text>
+            <!-- Hız Rüzgarları -->
+            <path d="M 5 40 L 20 40" stroke="white" stroke-width="5" stroke-linecap="round"/>
+            <path d="M 10 60 L 25 60" stroke="white" stroke-width="5" stroke-linecap="round"/>
+            <path d="M 80 20 L 95 35" stroke="white" stroke-width="5" stroke-linecap="round"/>
+        </svg>
+        <h1 class="brand-title">Priv Kurye</h1>
+        <p class="brand-subtitle">Hemen Paket Gönder</p>
+    </div>
+
     <div class="card">
-        <h2>📦 Kurye Talep Formu</h2>
-        
         <!-- ALINMA BÖLÜMÜ -->
         <label>1️⃣ Nereden Alınacak?</label>
         <button class="btn-location" onclick="geolocate('alinacak')">📍 Konumumu Otomatik Bul</button>
@@ -65,7 +150,7 @@
         <div id="status_teslim" class="status">❌ Haritadan konum seçilmedi</div>
     </div>
 
-    <!-- YENİ GÜNCELLENEN SEÇENEKLER KARTI -->
+    <!-- SEÇENEKLER KARTI -->
     <div class="card">
         <label>Paket Boyutu</label>
         <select id="boyut">
@@ -108,7 +193,6 @@
             <option value="Acil (15dk)">Acil (15dk)</option>
             <option value="Özel">Özel Saat Belirle</option>
         </select>
-        <!-- Özel seçildiğinde açılacak saat kutusu -->
         <input type="time" id="ozel_alinma_kutusu" style="display: none; border-color: #007bff; border-width: 2px;">
 
         <label>Max Teslim Saati</label>
@@ -120,20 +204,17 @@
             <option value="5 Saat">5 Saat</option>
             <option value="Özel">Özel Saat Belirle</option>
         </select>
-        <!-- Özel seçildiğinde açılacak saat kutusu -->
         <input type="time" id="ozel_teslim_kutusu" style="display: none; border-color: #007bff; border-width: 2px;">
 
-        <!-- YENİ: Serbest Açıklama Alanı -->
         <label>Ek Notlar (İsteğe bağlı)</label>
         <textarea id="genel_aciklama" rows="2" placeholder="Kuryeye iletmek istediğiniz diğer detaylar..."></textarea>
 
-        <button class="btn-submit" onclick="sendToWhatsApp()">✅ WhatsApp'tan Gönder</button>
+        <button class="btn-submit" onclick="sendToWhatsApp()">🚀 Priv Kurye'yi Çağır</button>
     </div>
 
     <!-- HARİTA VE JS KODLARI (DEĞİŞTİRİLMEDİ) -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // Ümraniye merkezli başlangıç koordinatları
         const startLat = 41.0256;
         const startLng = 29.0963;
 
@@ -142,7 +223,6 @@
         let coords = { alinacak: null, teslim: null };
         let searchTimeouts = {};
 
-        // Haritaları Başlatma
         function initMap(type) {
             maps[type] = L.map('map_' + type).setView([startLat, startLng], 13);
             
@@ -264,7 +344,6 @@
                 });
         }
 
-        // YENİ: Özel saat seçildiğinde input kutusunu gösterip gizleyen fonksiyon
         function toggleOzelSaat(selectId, inputId) {
             const selectValue = document.getElementById(selectId).value;
             const inputKutusu = document.getElementById(inputId);
@@ -273,11 +352,10 @@
                 inputKutusu.style.display = "block";
             } else {
                 inputKutusu.style.display = "none";
-                inputKutusu.value = ""; // Kapatılırsa içini temizle
+                inputKutusu.value = ""; 
             }
         }
 
-        // WhatsApp'a Gönder
         function sendToWhatsApp() {
             if (!coords.alinacak || !coords.teslim) {
                 alert("Lütfen hem alınacak hem de teslim edilecek konumu haritadan veya listeden seçin!");
@@ -298,7 +376,6 @@
             const alinacakMetin = alinacakEk ? `${alinacakIsim}\n📝 *Not:* ${alinacakEk}` : alinacakIsim;
             const teslimMetin = teslimEk ? `${teslimIsim}\n📝 *Not:* ${teslimEk}` : teslimIsim;
 
-            // Saat bilgilerini ayarla
             let alinmaSaati = document.getElementById("alinma_saati").value;
             if (alinmaSaati === "Özel") {
                 const ozelDeger = document.getElementById("ozel_alinma_kutusu").value;
@@ -311,10 +388,9 @@
                 teslimSaati = ozelDeger ? `Özel Saat (${ozelDeger})` : "Özel Saat (Seçilmedi)";
             }
 
-            // Genel not varsa mesaja ekle
             const notBolumu = genelNot ? `\n\n📌 *EK NOTLAR:*\n${genelNot}` : "";
 
-            const mesaj = `📦 *YENİ KURYE TALEBİ*\n\n` +
+            const mesaj = `📦 *PRİV KURYE TALEBİ*\n\n` +
                           `🟢 *ALINACAK YER:*\n${alinacakMetin}\n📍 Konum: ${mapAlinacak}\n\n` +
                           `🔴 *TESLİM EDİLECEK YER:*\n${teslimMetin}\n📍 Konum: ${mapTeslim}\n\n` +
                           `📏 *Boyut:* ${document.getElementById("boyut").value}\n` +

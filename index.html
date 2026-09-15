@@ -27,8 +27,11 @@
         .btn-submit { background-color: #25D366; color: white; border: none; font-weight: bold; font-size: 1.3rem; margin-top: 20px; cursor: pointer; padding: 16px; }
         .btn-submit:hover { background-color: #1ebe5d; }
         
+        /* Yeni: Seçilen Adres Kutusu */
+        .selected-address-box { background-color: #e3f2fd; color: #0d47a1; padding: 12px; border-radius: 8px; margin-top: 10px; font-weight: bold; font-size: 1rem; border: 1px solid #bbdefb; display: none; }
+        
         .status { text-align: center; font-weight: bold; margin-top: 8px; font-size: 1rem; color: #dc3545; }
-        .status.success { color: #28a745; }
+        .status.success { color: #28a745; display: none; /* Artık seçilen adres kutusu olduğu için bunu gizliyoruz */ }
     </style>
 </head>
 <body>
@@ -42,6 +45,12 @@
             <input type="text" id="search_alinacak" oninput="searchAddress('alinacak')" placeholder="Sokak, mahalle veya ilçe yazın...">
             <ul id="results_alinacak" class="autocomplete-list"></ul>
         </div>
+        <!-- Yeni: Açıklama Alanı -->
+        <input type="text" id="desc_alinacak" placeholder="Bina No, Daire, Açıklama (İsteğe bağlı)">
+        
+        <!-- Yeni: Seçilen Adres Göstergesi -->
+        <div id="selected_box_alinacak" class="selected-address-box">📍 Seçilen Adres: Bekleniyor...</div>
+        
         <div id="map_alinacak" class="map"></div>
         <div id="status_alinacak" class="status">❌ Haritadan konum seçilmedi</div>
 
@@ -52,6 +61,12 @@
             <input type="text" id="search_teslim" oninput="searchAddress('teslim')" placeholder="Sokak, mahalle veya ilçe yazın...">
             <ul id="results_teslim" class="autocomplete-list"></ul>
         </div>
+        <!-- Yeni: Açıklama Alanı -->
+        <input type="text" id="desc_teslim" placeholder="Bina No, Daire, Açıklama (İsteğe bağlı)">
+        
+        <!-- Yeni: Seçilen Adres Göstergesi -->
+        <div id="selected_box_teslim" class="selected-address-box">📍 Seçilen Adres: Bekleniyor...</div>
+
         <div id="map_teslim" class="map"></div>
         <div id="status_teslim" class="status">❌ Haritadan konum seçilmedi</div>
     </div>
@@ -101,13 +116,16 @@
         // Haritaları Başlatma Fonksiyonu
         function initMap(type) {
             maps[type] = L.map('map_' + type).setView([startLat, startLng], 13);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap'
+            
+            // YENİ: Google Haritalar Görünümü (API gerektirmez, doğrudan tile url)
+            L.tileLayer('http://mt0.google.com/vt/lyrs=m&hl=tr&x={x}&y={y}&z={z}', {
+                attribution: '© Google Haritalar',
+                maxZoom: 20
             }).addTo(maps[type]);
 
             // Haritaya tıklanınca
             maps[type].on('click', function(e) {
-                setMarker(type, e.latlng.lat, e.latlng.lng);
+                setMarker(type, e.latlng.lat, e.latlng.lng, true);
                 reverseGeocode(type, e.latlng.lat, e.latlng.lng);
             });
         }
@@ -115,16 +133,27 @@
         initMap('alinacak');
         initMap('teslim');
 
+        // YENİ: Seçilen Adres Kutusunu Güncelleme
+        function updateSelectedBox(type, addressText) {
+            const box = document.getElementById('selected_box_' + type);
+            box.style.display = 'block';
+            box.innerHTML = `📍 Haritadaki Adres:<br><span style="color:#333; font-weight:normal; margin-top:5px; display:inline-block;">${addressText}</span>`;
+            
+            // Hata mesajını gizle
+            document.getElementById('status_' + type).style.display = 'none';
+        }
+
         // İşaretçi Koyma
-        function setMarker(type, lat, lng) {
+        function setMarker(type, lat, lng, isClick = false) {
             if (markers[type]) maps[type].removeLayer(markers[type]);
             markers[type] = L.marker([lat, lng]).addTo(maps[type]);
             coords[type] = { lat: lat, lng: lng };
-            maps[type].setView([lat, lng], 16);
             
-            const statusEl = document.getElementById('status_' + type);
-            statusEl.innerHTML = "✅ Konum Seçildi!";
-            statusEl.classList.add('success');
+            // YENİ: Harita animasyonla seçilen yere kaysın
+            if(!isClick) {
+                maps[type].flyTo([lat, lng], 17, { duration: 1.5 });
+            }
+            
             document.getElementById('map_' + type).style.borderColor = "#28a745";
         }
 
@@ -132,6 +161,7 @@
         function geolocate(type) {
             if (navigator.geolocation) {
                 document.getElementById('status_' + type).innerHTML = "⏳ Konumunuz bulunuyor...";
+                document.getElementById('status_' + type).style.display = 'block';
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
                         const lat = position.coords.latitude;
@@ -170,12 +200,16 @@
                             const p = feature.properties;
                             const title = p.name || p.street || "Bilinmeyen Yer";
                             const subtitle = [p.district, p.city].filter(Boolean).join(', ');
+                            const fullAddress = `${title}, ${subtitle}`;
                             
                             const li = document.createElement('li');
                             li.innerHTML = `<strong>${title}</strong><small>${subtitle}</small>`;
+                            
+                            // Listeden seçildiğinde yapılacaklar
                             li.onclick = () => {
                                 setMarker(type, feature.geometry.coordinates[1], feature.geometry.coordinates[0]);
-                                document.getElementById('search_' + type).value = `${title}, ${subtitle}`;
+                                document.getElementById('search_' + type).value = fullAddress;
+                                updateSelectedBox(type, fullAddress); // Seçilen metni güncelle
                                 resultsContainer.innerHTML = ''; // listeyi kapat
                             };
                             resultsContainer.appendChild(li);
@@ -189,35 +223,42 @@
             fetch(`https://photon.komoot.io/reverse?lon=${lng}&lat=${lat}&lang=tr`)
                 .then(res => res.json())
                 .then(data => {
+                    let fullAddress = "Haritadan seçilen konum";
                     if(data.features && data.features.length > 0) {
                         const p = data.features[0].properties;
                         const title = p.name || p.street || "";
                         const subtitle = [p.district, p.city].filter(Boolean).join(', ');
-                        document.getElementById('search_' + type).value = `${title} ${subtitle}`;
-                    } else {
-                        document.getElementById('search_' + type).value = "Haritadan seçilen konum";
+                        fullAddress = `${title} ${subtitle}`;
                     }
+                    document.getElementById('search_' + type).value = fullAddress;
+                    updateSelectedBox(type, fullAddress);
                 });
         }
 
         // WhatsApp'a Gönder
         function sendToWhatsApp() {
             if (!coords.alinacak || !coords.teslim) {
-                alert("Lütfen hem alınacak hem de teslim edilecek konumu seçin!");
+                alert("Lütfen hem alınacak hem de teslim edilecek konumu haritadan veya listeden seçin!");
                 return;
             }
 
             const telefon = "905418733299";
             
             const alinacakIsim = document.getElementById("search_alinacak").value || "Haritadan Seçildi";
+            const alinacakEk = document.getElementById("desc_alinacak").value;
             const teslimIsim = document.getElementById("search_teslim").value || "Haritadan Seçildi";
+            const teslimEk = document.getElementById("desc_teslim").value;
             
             const mapAlinacak = `https://www.google.com/maps?q=${coords.alinacak.lat},${coords.alinacak.lng}`;
             const mapTeslim = `https://www.google.com/maps?q=${coords.teslim.lat},${coords.teslim.lng}`;
 
+            // Açıklama alanları doldurulduysa mesaja eklenir
+            const alinacakMetin = alinacakEk ? `${alinacakIsim}\n📝 *Not:* ${alinacakEk}` : alinacakIsim;
+            const teslimMetin = teslimEk ? `${teslimIsim}\n📝 *Not:* ${teslimEk}` : teslimIsim;
+
             const mesaj = `📦 *YENİ KURYE TALEBİ*\n\n` +
-                          `🟢 *ALINACAK YER:*\n${alinacakIsim}\n📍 Konum: ${mapAlinacak}\n\n` +
-                          `🔴 *TESLİM EDİLECEK YER:*\n${teslimIsim}\n📍 Konum: ${mapTeslim}\n\n` +
+                          `🟢 *ALINACAK YER:*\n${alinacakMetin}\n📍 Konum: ${mapAlinacak}\n\n` +
+                          `🔴 *TESLİM EDİLECEK YER:*\n${teslimMetin}\n📍 Konum: ${mapTeslim}\n\n` +
                           `📏 *Boyut:* ${document.getElementById("boyut").value}\n` +
                           `⚖️ *Ağırlık:* ${document.getElementById("agirlik").value}\n` +
                           `🕒 *Alınma Zamanı:* ${document.getElementById("alinma_saati").value}\n` +

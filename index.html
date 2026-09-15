@@ -11,7 +11,8 @@
         .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
         h2 { text-align: center; color: #333; margin-top: 0; }
         label { font-weight: bold; display: block; margin-top: 15px; font-size: 1.1rem; color: #444; }
-        input, select, button { width: 100%; padding: 14px; margin-top: 8px; border-radius: 8px; border: 1px solid #ccc; font-size: 1.1rem; box-sizing: border-box; }
+        input, select, textarea, button { width: 100%; padding: 14px; margin-top: 8px; border-radius: 8px; border: 1px solid #ccc; font-size: 1.1rem; box-sizing: border-box; }
+        textarea { resize: vertical; font-family: inherit; }
         .map { height: 250px; margin-top: 10px; border-radius: 8px; border: 2px solid #ccc; z-index: 1; }
         
         /* Arama Önerileri İçin Dropdown Tasarımı */
@@ -64,37 +65,72 @@
         <div id="status_teslim" class="status">❌ Haritadan konum seçilmedi</div>
     </div>
 
+    <!-- YENİ GÜNCELLENEN SEÇENEKLER KARTI -->
     <div class="card">
         <label>Paket Boyutu</label>
         <select id="boyut">
             <option value="Zarf / Dosya">Zarf / Dosya</option>
-            <option value="Küçük Kutu">Küçük Kutu (Ayakkabı Kutusu)</option>
-            <option value="Orta/Büyük Kutu">Orta/Büyük Kutu</option>
+            <option value="Küçük Paket">Küçük Paket</option>
+            <option value="Orta Paket">Orta Paket</option>
+            <option value="Büyük Paket">Büyük Paket</option>
+            <option value="Büyük ve Uzun Paket">Büyük ve Uzun Paket</option>
         </select>
 
-        <label>Paket Ağırlığı (kg)</label>
+        <label>Paket Ağırlığı</label>
         <select id="agirlik">
             <option value="1 kg'dan az">1 kg'dan az</option>
-            <option value="1 - 5 kg arası">1 - 5 kg arası</option>
-            <option value="5 - 10 kg arası">5 - 10 kg arası</option>
+            <option value="2 kg">2 kg</option>
+            <option value="1 - 5 kg">1 - 5 kg</option>
+            <option value="5 - 10 kg">5 - 10 kg</option>
+            <option value="10 - 15 kg">10 - 15 kg</option>
+            <option value="15 - 20 kg">15 - 20 kg</option>
+            <option value="20 - 25 kg">20 - 25 kg</option>
+            <option value="25 - 30 kg">25 - 30 kg</option>
+            <option value="30 - 35 kg">30 - 35 kg</option>
+            <option value="35 - 40 kg">35 - 40 kg</option>
+            <option value="40 - 45 kg">40 - 45 kg</option>
+            <option value="45 - 50 kg">45 - 50 kg</option>
+            <option value="50 - 55 kg">50 - 55 kg</option>
+            <option value="55 - 60 kg">55 - 60 kg</option>
+            <option value="60 - 65 kg">60 - 65 kg</option>
+            <option value="65 - 70 kg">65 - 70 kg</option>
+            <option value="70 - 75 kg">70 - 75 kg</option>
+            <option value="75 - 80 kg">75 - 80 kg</option>
+            <option value="80 - 85 kg">80 - 85 kg</option>
+            <option value="85 - 90 kg">85 - 90 kg</option>
+            <option value="90 - 95 kg">90 - 95 kg</option>
+            <option value="95 - 100 kg">95 - 100 kg</option>
         </select>
 
         <label>Alınma Saati</label>
-        <select id="alinma_saati">
-            <option value="Şimdi">Şimdi</option>
-            <option value="1 Saat İçinde">1 Saat İçinde</option>
+        <select id="alinma_saati" onchange="toggleOzelSaat('alinma_saati', 'ozel_alinma_kutusu')">
+            <option value="Standart (30dk)">Standart (30dk)</option>
+            <option value="Acil (15dk)">Acil (15dk)</option>
+            <option value="Özel">Özel Saat Belirle</option>
         </select>
+        <!-- Özel seçildiğinde açılacak saat kutusu -->
+        <input type="time" id="ozel_alinma_kutusu" style="display: none; border-color: #007bff; border-width: 2px;">
 
         <label>Max Teslim Saati</label>
-        <select id="teslim_saati">
-            <option value="Fark etmez (Gün içi)">Fark etmez (Gün içi)</option>
-            <option value="En geç 1 saat içinde">En geç 1 saat içinde</option>
-            <option value="En geç 2 saat içinde">En geç 2 saat içinde</option>
+        <select id="teslim_saati" onchange="toggleOzelSaat('teslim_saati', 'ozel_teslim_kutusu')">
+            <option value="1 Saat">1 Saat</option>
+            <option value="2 Saat">2 Saat</option>
+            <option value="3 Saat">3 Saat</option>
+            <option value="4 Saat">4 Saat</option>
+            <option value="5 Saat">5 Saat</option>
+            <option value="Özel">Özel Saat Belirle</option>
         </select>
+        <!-- Özel seçildiğinde açılacak saat kutusu -->
+        <input type="time" id="ozel_teslim_kutusu" style="display: none; border-color: #007bff; border-width: 2px;">
+
+        <!-- YENİ: Serbest Açıklama Alanı -->
+        <label>Ek Notlar (İsteğe bağlı)</label>
+        <textarea id="genel_aciklama" rows="2" placeholder="Kuryeye iletmek istediğiniz diğer detaylar..."></textarea>
 
         <button class="btn-submit" onclick="sendToWhatsApp()">✅ WhatsApp'tan Gönder</button>
     </div>
 
+    <!-- HARİTA VE JS KODLARI (DEĞİŞTİRİLMEDİ) -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         // Ümraniye merkezli başlangıç koordinatları
@@ -110,13 +146,11 @@
         function initMap(type) {
             maps[type] = L.map('map_' + type).setView([startLat, startLng], 13);
             
-            // Google Haritalar Görünümü
             L.tileLayer('http://mt0.google.com/vt/lyrs=m&hl=tr&x={x}&y={y}&z={z}', {
                 attribution: '© Google Haritalar',
                 maxZoom: 20
             }).addTo(maps[type]);
 
-            // Haritaya tıklayınca
             maps[type].on('click', function(e) {
                 setMarker(type, e.latlng.lat, e.latlng.lng, true);
                 reverseGeocode(type, e.latlng.lat, e.latlng.lng);
@@ -126,21 +160,18 @@
         initMap('alinacak');
         initMap('teslim');
 
-        // Mavi Kutu Güncelleme (Seçilen Adres)
         function updateSelectedBox(type, addressText) {
             const box = document.getElementById('selected_box_' + type);
             box.style.display = 'block';
             box.innerHTML = `📍 Haritadaki Adres:<br><span style="color:#333; font-weight:normal; margin-top:5px; display:inline-block;">${addressText}</span>`;
-            document.getElementById('status_' + type).style.display = 'none'; // Hata mesajını gizle
+            document.getElementById('status_' + type).style.display = 'none'; 
         }
 
-        // İşaretçi Koyma ve Haritayı Kaydırma (Animasyon)
         function setMarker(type, lat, lng, isClick = false) {
             if (markers[type]) maps[type].removeLayer(markers[type]);
             markers[type] = L.marker([lat, lng]).addTo(maps[type]);
             coords[type] = { lat: lat, lng: lng };
             
-            // Eğer listeden seçildiyse harita animasyonla oraya uçsun
             if(!isClick) {
                 maps[type].flyTo([lat, lng], 17, { duration: 1.5 });
             }
@@ -148,7 +179,6 @@
             document.getElementById('map_' + type).style.borderColor = "#28a745";
         }
 
-        // Otomatik Konum Bulma (GPS)
         function geolocate(type) {
             if (navigator.geolocation) {
                 document.getElementById('status_' + type).innerHTML = "⏳ Konumunuz bulunuyor...";
@@ -161,7 +191,7 @@
                         reverseGeocode(type, lat, lng);
                     },
                     (error) => {
-                        alert("Konum alınamadı. Lütfen telefonunuzun konum servislerinin açık olduğundan emin olun veya haritadan kendiniz seçin.");
+                        alert("Konum alınamadı. Telefonunuzun konum servislerinin açık olduğundan emin olun.");
                         document.getElementById('status_' + type).innerHTML = "❌ Konum alınamadı";
                     },
                     { enableHighAccuracy: true }
@@ -171,7 +201,6 @@
             }
         }
 
-        // YENİ: Adres Arama (Resmi Nominatim API ile Kararlı Arama)
         function searchAddress(type) {
             clearTimeout(searchTimeouts[type]);
             const query = document.getElementById('search_' + type).value;
@@ -183,7 +212,6 @@
             }
 
             searchTimeouts[type] = setTimeout(() => {
-                // İstanbul ve Türkiye odaklı arama yapıyoruz ki sonuçlar saçmalamasın
                 const searchQuery = encodeURIComponent(query + ' İstanbul');
                 
                 fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${searchQuery}&limit=5&addressdetails=1`)
@@ -191,7 +219,6 @@
                     .then(data => {
                         resultsContainer.innerHTML = '';
                         data.forEach(item => {
-                            // Uzun adres metnini virgüllerden bölüp daha temiz gösteriyoruz
                             const parts = item.display_name.split(', ');
                             const title = parts[0] || "Bilinmeyen Yer";
                             const subtitle = parts.slice(1, 4).join(', ') || "";
@@ -200,7 +227,6 @@
                             const li = document.createElement('li');
                             li.innerHTML = `<strong>${title}</strong><small>${subtitle}</small>`;
                             
-                            // Kullanıcı menüden adres seçtiğinde:
                             li.onclick = () => {
                                 const lat = item.lat;
                                 const lng = item.lon;
@@ -214,10 +240,9 @@
                         });
                     })
                     .catch(err => console.error("Arama servisi geçici olarak yanıt vermiyor."));
-            }, 800); // Sistemi yormamak için bekleyiş süresi
+            }, 800);
         }
 
-        // YENİ: Tıklanan Yerin Adresini Çözümleme (Nominatim API - Boş kalmaz)
         function reverseGeocode(type, lat, lng) {
             document.getElementById('search_' + type).value = "Adres bulunuyor...";
             
@@ -225,22 +250,31 @@
                 .then(res => res.json())
                 .then(data => {
                     let fullAddress = "Haritadan seçilen konum";
-                    
                     if (data && data.display_name) {
-                        // Türkiye ve Posta kodu gibi gereksiz detayları metinden kırpalım
                         const parts = data.display_name.split(', ');
                         fullAddress = parts.slice(0, 4).join(', '); 
                     }
-                    
                     document.getElementById('search_' + type).value = fullAddress;
                     updateSelectedBox(type, fullAddress);
                 })
                 .catch(err => {
-                    // API anlık yanıt vermezse metin kutusu boş kalmasın diye varsayılan değer
                     const fallback = "Haritadan seçilen konum";
                     document.getElementById('search_' + type).value = fallback;
                     updateSelectedBox(type, fallback);
                 });
+        }
+
+        // YENİ: Özel saat seçildiğinde input kutusunu gösterip gizleyen fonksiyon
+        function toggleOzelSaat(selectId, inputId) {
+            const selectValue = document.getElementById(selectId).value;
+            const inputKutusu = document.getElementById(inputId);
+            
+            if (selectValue === "Özel") {
+                inputKutusu.style.display = "block";
+            } else {
+                inputKutusu.style.display = "none";
+                inputKutusu.value = ""; // Kapatılırsa içini temizle
+            }
         }
 
         // WhatsApp'a Gönder
@@ -256,6 +290,7 @@
             const alinacakEk = document.getElementById("desc_alinacak").value.trim();
             const teslimIsim = document.getElementById("search_teslim").value || "Haritadan Seçildi";
             const teslimEk = document.getElementById("desc_teslim").value.trim();
+            const genelNot = document.getElementById("genel_aciklama").value.trim();
             
             const mapAlinacak = `https://www.google.com/maps?q=${coords.alinacak.lat},${coords.alinacak.lng}`;
             const mapTeslim = `https://www.google.com/maps?q=${coords.teslim.lat},${coords.teslim.lng}`;
@@ -263,13 +298,30 @@
             const alinacakMetin = alinacakEk ? `${alinacakIsim}\n📝 *Not:* ${alinacakEk}` : alinacakIsim;
             const teslimMetin = teslimEk ? `${teslimIsim}\n📝 *Not:* ${teslimEk}` : teslimIsim;
 
+            // Saat bilgilerini ayarla
+            let alinmaSaati = document.getElementById("alinma_saati").value;
+            if (alinmaSaati === "Özel") {
+                const ozelDeger = document.getElementById("ozel_alinma_kutusu").value;
+                alinmaSaati = ozelDeger ? `Özel Saat (${ozelDeger})` : "Özel Saat (Seçilmedi)";
+            }
+
+            let teslimSaati = document.getElementById("teslim_saati").value;
+            if (teslimSaati === "Özel") {
+                const ozelDeger = document.getElementById("ozel_teslim_kutusu").value;
+                teslimSaati = ozelDeger ? `Özel Saat (${ozelDeger})` : "Özel Saat (Seçilmedi)";
+            }
+
+            // Genel not varsa mesaja ekle
+            const notBolumu = genelNot ? `\n\n📌 *EK NOTLAR:*\n${genelNot}` : "";
+
             const mesaj = `📦 *YENİ KURYE TALEBİ*\n\n` +
                           `🟢 *ALINACAK YER:*\n${alinacakMetin}\n📍 Konum: ${mapAlinacak}\n\n` +
                           `🔴 *TESLİM EDİLECEK YER:*\n${teslimMetin}\n📍 Konum: ${mapTeslim}\n\n` +
                           `📏 *Boyut:* ${document.getElementById("boyut").value}\n` +
                           `⚖️ *Ağırlık:* ${document.getElementById("agirlik").value}\n` +
-                          `🕒 *Alınma Zamanı:* ${document.getElementById("alinma_saati").value}\n` +
-                          `🏁 *Max Teslim Saati:* ${document.getElementById("teslim_saati").value}`;
+                          `🕒 *Alınma Zamanı:* ${alinmaSaati}\n` +
+                          `🏁 *Max Teslim Saati:* ${teslimSaati}` + 
+                          notBolumu;
 
             window.open(`https://wa.me/${telefon}?text=${encodeURIComponent(mesaj)}`, '_blank');
         }

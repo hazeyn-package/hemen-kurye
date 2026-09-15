@@ -16,11 +16,11 @@
         
         /* Arama Önerileri İçin Dropdown Tasarımı */
         .autocomplete-container { position: relative; }
-        .autocomplete-list { position: absolute; z-index: 1000; background: white; width: 100%; border: 1px solid #ccc; border-radius: 0 0 8px 8px; max-height: 200px; overflow-y: auto; margin: 0; padding: 0; list-style: none; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+        .autocomplete-list { position: absolute; z-index: 1000; background: white; width: 100%; border: 1px solid #ccc; border-radius: 0 0 8px 8px; max-height: 250px; overflow-y: auto; margin: 0; padding: 0; list-style: none; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
         .autocomplete-list li { padding: 12px; border-bottom: 1px solid #eee; cursor: pointer; font-size: 1rem; }
         .autocomplete-list li:hover { background-color: #f8f9fa; }
-        .autocomplete-list li strong { color: #007bff; display: block; }
-        .autocomplete-list li small { color: #666; }
+        .autocomplete-list li strong { color: #007bff; display: block; margin-bottom: 3px; }
+        .autocomplete-list li small { color: #666; display: block; line-height: 1.2; }
 
         .btn-location { background-color: #e9ecef; color: #333; border: 1px solid #ccc; font-weight: bold; margin-bottom: 10px; cursor: pointer; }
         .btn-location:hover { background-color: #dee2e6; }
@@ -28,7 +28,7 @@
         .btn-submit:hover { background-color: #1ebe5d; }
         
         /* Seçilen Adres Kutusu */
-        .selected-address-box { background-color: #e3f2fd; color: #0d47a1; padding: 12px; border-radius: 8px; margin-top: 10px; font-weight: bold; font-size: 1rem; border: 1px solid #bbdefb; display: none; }
+        .selected-address-box { background-color: #e3f2fd; color: #0d47a1; padding: 12px; border-radius: 8px; margin-top: 10px; font-weight: bold; font-size: 1rem; border: 1px solid #bbdefb; display: none; line-height: 1.4; }
         
         .status { text-align: center; font-weight: bold; margin-top: 8px; font-size: 1rem; color: #dc3545; }
     </style>
@@ -41,7 +41,7 @@
         <label>1️⃣ Nereden Alınacak?</label>
         <button class="btn-location" onclick="geolocate('alinacak')">📍 Konumumu Otomatik Bul</button>
         <div class="autocomplete-container">
-            <input type="text" id="search_alinacak" oninput="searchAddress('alinacak')" placeholder="Sokak, mahalle veya ilçe yazın...">
+            <input type="text" id="search_alinacak" oninput="searchAddress('alinacak')" placeholder="Sokak veya mahalle yazın (Örn: Şiir Sokak)">
             <ul id="results_alinacak" class="autocomplete-list"></ul>
         </div>
         <input type="text" id="desc_alinacak" placeholder="Bina No, Daire, Açıklama (İsteğe bağlı)">
@@ -54,7 +54,7 @@
         <label style="margin-top: 30px;">2️⃣ Nereye Teslim Edilecek?</label>
         <button class="btn-location" onclick="geolocate('teslim')">📍 Konumumu Otomatik Bul</button>
         <div class="autocomplete-container">
-            <input type="text" id="search_teslim" oninput="searchAddress('teslim')" placeholder="Sokak, mahalle veya ilçe yazın...">
+            <input type="text" id="search_teslim" oninput="searchAddress('teslim')" placeholder="Sokak veya mahalle yazın (Örn: Atatürk Mah)">
             <ul id="results_teslim" class="autocomplete-list"></ul>
         </div>
         <input type="text" id="desc_teslim" placeholder="Bina No, Daire, Açıklama (İsteğe bağlı)">
@@ -140,7 +140,7 @@
             markers[type] = L.marker([lat, lng]).addTo(maps[type]);
             coords[type] = { lat: lat, lng: lng };
             
-            // Eğer listeden seçildiyse (tıklama değilse) harita animasyonla oraya uçsun
+            // Eğer listeden seçildiyse harita animasyonla oraya uçsun
             if(!isClick) {
                 maps[type].flyTo([lat, lng], 17, { duration: 1.5 });
             }
@@ -171,7 +171,7 @@
             }
         }
 
-        // Adres Arama (Önerileri Gösterme)
+        // YENİ: Adres Arama (Resmi Nominatim API ile Kararlı Arama)
         function searchAddress(type) {
             clearTimeout(searchTimeouts[type]);
             const query = document.getElementById('search_' + type).value;
@@ -183,49 +183,63 @@
             }
 
             searchTimeouts[type] = setTimeout(() => {
-                fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&lat=${startLat}&lon=${startLng}&lang=tr&limit=5`)
+                // İstanbul ve Türkiye odaklı arama yapıyoruz ki sonuçlar saçmalamasın
+                const searchQuery = encodeURIComponent(query + ' İstanbul');
+                
+                fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${searchQuery}&limit=5&addressdetails=1`)
                     .then(res => res.json())
                     .then(data => {
                         resultsContainer.innerHTML = '';
-                        data.features.forEach(feature => {
-                            const p = feature.properties;
-                            const title = p.name || p.street || "Bilinmeyen Yer";
-                            const subtitle = [p.district, p.city].filter(Boolean).join(', ');
+                        data.forEach(item => {
+                            // Uzun adres metnini virgüllerden bölüp daha temiz gösteriyoruz
+                            const parts = item.display_name.split(', ');
+                            const title = parts[0] || "Bilinmeyen Yer";
+                            const subtitle = parts.slice(1, 4).join(', ') || "";
                             const fullAddress = `${title}, ${subtitle}`;
                             
                             const li = document.createElement('li');
                             li.innerHTML = `<strong>${title}</strong><small>${subtitle}</small>`;
                             
-                            // KULLANICI LİSTEDEN SEÇİM YAPTIĞINDA ÇALIŞACAK KISIM:
+                            // Kullanıcı menüden adres seçtiğinde:
                             li.onclick = () => {
-                                const lat = feature.geometry.coordinates[1];
-                                const lng = feature.geometry.coordinates[0];
+                                const lat = item.lat;
+                                const lng = item.lon;
                                 
-                                setMarker(type, lat, lng, false); // İşaretçiyi koy ve haritayı oraya uçur
-                                document.getElementById('search_' + type).value = fullAddress; // Arama kutusuna tam ismi yaz
-                                updateSelectedBox(type, fullAddress); // Mavi kutuya seçimi yansıt
-                                resultsContainer.innerHTML = ''; // Listeyi kapat
+                                setMarker(type, lat, lng, false);
+                                document.getElementById('search_' + type).value = fullAddress;
+                                updateSelectedBox(type, fullAddress);
+                                resultsContainer.innerHTML = ''; 
                             };
                             resultsContainer.appendChild(li);
                         });
-                    });
-            }, 500);
+                    })
+                    .catch(err => console.error("Arama servisi geçici olarak yanıt vermiyor."));
+            }, 800); // Sistemi yormamak için bekleyiş süresi
         }
 
-        // Tıklanan Yerin Adresini Çözümleme (Reverse Geocode)
+        // YENİ: Tıklanan Yerin Adresini Çözümleme (Nominatim API - Boş kalmaz)
         function reverseGeocode(type, lat, lng) {
-            fetch(`https://photon.komoot.io/reverse?lon=${lng}&lat=${lat}&lang=tr`)
+            document.getElementById('search_' + type).value = "Adres bulunuyor...";
+            
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`)
                 .then(res => res.json())
                 .then(data => {
                     let fullAddress = "Haritadan seçilen konum";
-                    if(data.features && data.features.length > 0) {
-                        const p = data.features[0].properties;
-                        const title = p.name || p.street || "";
-                        const subtitle = [p.district, p.city].filter(Boolean).join(', ');
-                        fullAddress = `${title} ${subtitle}`;
+                    
+                    if (data && data.display_name) {
+                        // Türkiye ve Posta kodu gibi gereksiz detayları metinden kırpalım
+                        const parts = data.display_name.split(', ');
+                        fullAddress = parts.slice(0, 4).join(', '); 
                     }
+                    
                     document.getElementById('search_' + type).value = fullAddress;
                     updateSelectedBox(type, fullAddress);
+                })
+                .catch(err => {
+                    // API anlık yanıt vermezse metin kutusu boş kalmasın diye varsayılan değer
+                    const fallback = "Haritadan seçilen konum";
+                    document.getElementById('search_' + type).value = fallback;
+                    updateSelectedBox(type, fallback);
                 });
         }
 

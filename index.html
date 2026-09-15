@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kurye Çağır</title>
+    <!-- Ücretsiz Harita Kütüphanesi -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body { font-family: sans-serif; background-color: #f0f2f5; padding: 15px; max-width: 600px; margin: auto; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        h2 { text-align: center; color: #333; margin-top: 0; }
+        label { font-weight: bold; display: block; margin-top: 15px; font-size: 1.1rem; color: #444; }
+        input, select, button { width: 100%; padding: 14px; margin-top: 8px; border-radius: 8px; border: 1px solid #ccc; font-size: 1.1rem; box-sizing: border-box; }
+        .map { height: 250px; margin-top: 10px; border-radius: 8px; border: 2px solid #ccc; z-index: 1; }
+        
+        /* Arama Önerileri İçin Dropdown Tasarımı */
+        .autocomplete-container { position: relative; }
+        .autocomplete-list { position: absolute; z-index: 1000; background: white; width: 100%; border: 1px solid #ccc; border-radius: 0 0 8px 8px; max-height: 200px; overflow-y: auto; margin: 0; padding: 0; list-style: none; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+        .autocomplete-list li { padding: 12px; border-bottom: 1px solid #eee; cursor: pointer; font-size: 1rem; }
+        .autocomplete-list li:hover { background-color: #f8f9fa; }
+        .autocomplete-list li strong { color: #007bff; display: block; }
+        .autocomplete-list li small { color: #666; }
+
+        .btn-location { background-color: #e9ecef; color: #333; border: 1px solid #ccc; font-weight: bold; margin-bottom: 10px; cursor: pointer; }
+        .btn-location:hover { background-color: #dee2e6; }
+        .btn-submit { background-color: #25D366; color: white; border: none; font-weight: bold; font-size: 1.3rem; margin-top: 20px; cursor: pointer; padding: 16px; }
+        .btn-submit:hover { background-color: #1ebe5d; }
+        
+        .status { text-align: center; font-weight: bold; margin-top: 8px; font-size: 1rem; color: #dc3545; }
+        .status.success { color: #28a745; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>📦 Kurye Talep Formu</h2>
+        
+        <!-- ALINMA BÖLÜMÜ -->
+        <label>1️⃣ Nereden Alınacak?</label>
+        <button class="btn-location" onclick="geolocate('alinacak')">📍 Konumumu Otomatik Bul</button>
+        <div class="autocomplete-container">
+            <input type="text" id="search_alinacak" oninput="searchAddress('alinacak')" placeholder="Sokak, mahalle veya ilçe yazın...">
+            <ul id="results_alinacak" class="autocomplete-list"></ul>
+        </div>
+        <div id="map_alinacak" class="map"></div>
+        <div id="status_alinacak" class="status">❌ Haritadan konum seçilmedi</div>
+
+        <!-- TESLİM BÖLÜMÜ -->
+        <label style="margin-top: 30px;">2️⃣ Nereye Teslim Edilecek?</label>
+        <button class="btn-location" onclick="geolocate('teslim')">📍 Konumumu Otomatik Bul</button>
+        <div class="autocomplete-container">
+            <input type="text" id="search_teslim" oninput="searchAddress('teslim')" placeholder="Sokak, mahalle veya ilçe yazın...">
+            <ul id="results_teslim" class="autocomplete-list"></ul>
+        </div>
+        <div id="map_teslim" class="map"></div>
+        <div id="status_teslim" class="status">❌ Haritadan konum seçilmedi</div>
+    </div>
+
+    <div class="card">
+        <label>Paket Boyutu</label>
+        <select id="boyut">
+            <option value="Zarf / Dosya">Zarf / Dosya</option>
+            <option value="Küçük Kutu">Küçük Kutu (Ayakkabı Kutusu)</option>
+            <option value="Orta/Büyük Kutu">Orta/Büyük Kutu</option>
+        </select>
+
+        <label>Paket Ağırlığı (kg)</label>
+        <select id="agirlik">
+            <option value="1 kg'dan az">1 kg'dan az</option>
+            <option value="1 - 5 kg arası">1 - 5 kg arası</option>
+            <option value="5 - 10 kg arası">5 - 10 kg arası</option>
+        </select>
+
+        <label>Alınma Saati</label>
+        <select id="alinma_saati">
+            <option value="Şimdi">Şimdi</option>
+            <option value="1 Saat İçinde">1 Saat İçinde</option>
+        </select>
+
+        <label>Max Teslim Saati</label>
+        <select id="teslim_saati">
+            <option value="Fark etmez (Gün içi)">Fark etmez (Gün içi)</option>
+            <option value="En geç 1 saat içinde">En geç 1 saat içinde</option>
+            <option value="En geç 2 saat içinde">En geç 2 saat içinde</option>
+        </select>
+
+        <button class="btn-submit" onclick="sendToWhatsApp()">✅ WhatsApp'tan Gönder</button>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Ümraniye merkezli başlangıç koordinatları
+        const startLat = 41.0256;
+        const startLng = 29.0963;
+
+        let maps = {};
+        let markers = { alinacak: null, teslim: null };
+        let coords = { alinacak: null, teslim: null };
+        let searchTimeouts = {};
+
+        // Haritaları Başlatma Fonksiyonu
+        function initMap(type) {
+            maps[type] = L.map('map_' + type).setView([startLat, startLng], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap'
+            }).addTo(maps[type]);
+
+            // Haritaya tıklanınca
+            maps[type].on('click', function(e) {
+                setMarker(type, e.latlng.lat, e.latlng.lng);
+                reverseGeocode(type, e.latlng.lat, e.latlng.lng);
+            });
+        }
+
+        initMap('alinacak');
+        initMap('teslim');
+
+        // İşaretçi Koyma
+        function setMarker(type, lat, lng) {
+            if (markers[type]) maps[type].removeLayer(markers[type]);
+            markers[type] = L.marker([lat, lng]).addTo(maps[type]);
+            coords[type] = { lat: lat, lng: lng };
+            maps[type].setView([lat, lng], 16);
+            
+            const statusEl = document.getElementById('status_' + type);
+            statusEl.innerHTML = "✅ Konum Seçildi!";
+            statusEl.classList.add('success');
+            document.getElementById('map_' + type).style.borderColor = "#28a745";
+        }
+
+        // Otomatik Konum Bulma (GPS)
+        function geolocate(type) {
+            if (navigator.geolocation) {
+                document.getElementById('status_' + type).innerHTML = "⏳ Konumunuz bulunuyor...";
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+                        setMarker(type, lat, lng);
+                        reverseGeocode(type, lat, lng);
+                    },
+                    (error) => {
+                        alert("Konum alınamadı. Lütfen telefonunuzun konum servislerinin açık olduğundan emin olun veya haritadan kendiniz seçin.");
+                        document.getElementById('status_' + type).innerHTML = "❌ Konum alınamadı";
+                    },
+                    { enableHighAccuracy: true }
+                );
+            } else {
+                alert("Tarayıcınız konum özelliğini desteklemiyor.");
+            }
+        }
+
+        // Arama Önerileri (Photon API)
+        function searchAddress(type) {
+            clearTimeout(searchTimeouts[type]);
+            const query = document.getElementById('search_' + type).value;
+            const resultsContainer = document.getElementById('results_' + type);
+            
+            if(query.length < 3) {
+                resultsContainer.innerHTML = '';
+                return;
+            }
+
+            searchTimeouts[type] = setTimeout(() => {
+                fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&lat=${startLat}&lon=${startLng}&lang=tr&limit=5`)
+                    .then(res => res.json())
+                    .then(data => {
+                        resultsContainer.innerHTML = '';
+                        data.features.forEach(feature => {
+                            const p = feature.properties;
+                            const title = p.name || p.street || "Bilinmeyen Yer";
+                            const subtitle = [p.district, p.city].filter(Boolean).join(', ');
+                            
+                            const li = document.createElement('li');
+                            li.innerHTML = `<strong>${title}</strong><small>${subtitle}</small>`;
+                            li.onclick = () => {
+                                setMarker(type, feature.geometry.coordinates[1], feature.geometry.coordinates[0]);
+                                document.getElementById('search_' + type).value = `${title}, ${subtitle}`;
+                                resultsContainer.innerHTML = ''; // listeyi kapat
+                            };
+                            resultsContainer.appendChild(li);
+                        });
+                    });
+            }, 500);
+        }
+
+        // Haritaya tıklanınca adresi metne çevirme (Reverse Geocoding)
+        function reverseGeocode(type, lat, lng) {
+            fetch(`https://photon.komoot.io/reverse?lon=${lng}&lat=${lat}&lang=tr`)
+                .then(res => res.json())
+                .then(data => {
+                    if(data.features && data.features.length > 0) {
+                        const p = data.features[0].properties;
+                        const title = p.name || p.street || "";
+                        const subtitle = [p.district, p.city].filter(Boolean).join(', ');
+                        document.getElementById('search_' + type).value = `${title} ${subtitle}`;
+                    } else {
+                        document.getElementById('search_' + type).value = "Haritadan seçilen konum";
+                    }
+                });
+        }
+
+        // WhatsApp'a Gönder
+        function sendToWhatsApp() {
+            if (!coords.alinacak || !coords.teslim) {
+                alert("Lütfen hem alınacak hem de teslim edilecek konumu seçin!");
+                return;
+            }
+
+            const telefon = "905418733299";
+            
+            const alinacakIsim = document.getElementById("search_alinacak").value || "Haritadan Seçildi";
+            const teslimIsim = document.getElementById("search_teslim").value || "Haritadan Seçildi";
+            
+            const mapAlinacak = `https://www.google.com/maps?q=${coords.alinacak.lat},${coords.alinacak.lng}`;
+            const mapTeslim = `https://www.google.com/maps?q=${coords.teslim.lat},${coords.teslim.lng}`;
+
+            const mesaj = `📦 *YENİ KURYE TALEBİ*\n\n` +
+                          `🟢 *ALINACAK YER:*\n${alinacakIsim}\n📍 Konum: ${mapAlinacak}\n\n` +
+                          `🔴 *TESLİM EDİLECEK YER:*\n${teslimIsim}\n📍 Konum: ${mapTeslim}\n\n` +
+                          `📏 *Boyut:* ${document.getElementById("boyut").value}\n` +
+                          `⚖️ *Ağırlık:* ${document.getElementById("agirlik").value}\n` +
+                          `🕒 *Alınma Zamanı:* ${document.getElementById("alinma_saati").value}\n` +
+                          `🏁 *Max Teslim Saati:* ${document.getElementById("teslim_saati").value}`;
+
+            window.open(`https://wa.me/${telefon}?text=${encodeURIComponent(mesaj)}`, '_blank');
+        }
+    </script>
+</body>
+</html>
